@@ -80,6 +80,9 @@ public abstract class ClassUtils {
 	/** The CGLIB class separator: {@code "$$"}. */
 	public static final String CGLIB_CLASS_SEPARATOR = "$$";
 
+	/** The Byte Buddy class infix: {@code "SpringProxy"}. */
+	public static final String BYTE_BUDDY_CLASS_INFIX = "SpringProxy";
+
 	/** The ".class" file suffix. */
 	public static final String CLASS_FILE_SUFFIX = ".class";
 

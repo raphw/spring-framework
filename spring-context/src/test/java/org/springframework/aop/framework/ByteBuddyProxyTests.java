@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2020-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@ import java.io.Serializable;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import test.mixin.LockMixinAdvisor;
 
@@ -40,34 +43,38 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
-/**
- * Additional and overridden tests for CGLIB proxies.
- *
- * @author Rod Johnson
- * @author Juergen Hoeller
- * @author Rob Harrop
- * @author Ramnivas Laddad
- * @author Chris Beams
- */
 @SuppressWarnings("serial")
-public class CglibProxyTests extends AbstractAopProxyTests implements Serializable {
+public class ByteBuddyProxyTests extends AbstractAopProxyTests implements Serializable {
 
 	private static final String DEPENDENCY_CHECK_CONTEXT =
-			CglibProxyTests.class.getSimpleName() + "-with-dependency-checking.xml";
+			ByteBuddyProxyTests.class.getSimpleName() + "-with-dependency-checking.xml";
 
+	@Override
+	@BeforeEach
+	public void setUp() {
+		super.setUp();
+		System.setProperty("org.springframework.aop.framework.bytebuddy", Boolean.TRUE.toString());
+	}
+
+	@Override
+	@AfterEach
+	public void tearDown() {
+		super.tearDown();
+		System.setProperty("org.springframework.aop.framework.bytebuddy", Boolean.TRUE.toString());
+	}
 
 	@Override
 	protected Object createProxy(ProxyCreatorSupport as) {
 		as.setProxyTargetClass(true);
 		Object proxy = as.createAopProxy().getProxy();
-		assertThat(AopUtils.isCglibProxy(proxy)).isTrue();
+		assertThat(AopUtils.isByteBuddyProxy(proxy)).isTrue();
 		return proxy;
 	}
 
 	@Override
 	protected AopProxy createAopProxy(AdvisedSupport as) {
 		as.setProxyTargetClass(true);
-		return new CglibAopProxy(as);
+		return new ByteBuddyAopProxy(as);
 	}
 
 	@Override
@@ -79,7 +86,7 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 	@Test
 	public void testNullConfig() {
 		assertThatIllegalArgumentException().isThrownBy(() ->
-				new CglibAopProxy(null));
+				new ByteBuddyAopProxy(null));
 	}
 
 	@Test
@@ -100,12 +107,12 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 		AdvisedSupport as = new AdvisedSupport();
 		as.setTargetSource(mockTargetSource);
 		as.addAdvice(new NopInterceptor());
-		AopProxy aop = new CglibAopProxy(as);
+		AopProxy aop = new ByteBuddyAopProxy(as);
 
 		ProtectedMethodTestBean proxy = (ProtectedMethodTestBean) aop.getProxy();
-		assertThat(AopUtils.isCglibProxy(proxy)).isTrue();
-		assertThat(bean.getClass().getClassLoader()).isEqualTo(proxy.getClass().getClassLoader());
-		assertThat(proxy.getString()).isEqualTo("foo");
+		Assertions.assertThat(AopUtils.isByteBuddyProxy(proxy)).isTrue();
+		Assertions.assertThat(bean.getClass().getClassLoader()).isEqualTo(proxy.getClass().getClassLoader());
+		Assertions.assertThat(proxy.getString()).isEqualTo("foo");
 	}
 
 	@Test
@@ -117,12 +124,12 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 		AdvisedSupport as = new AdvisedSupport();
 		as.setTargetSource(mockTargetSource);
 		as.addAdvice(new NopInterceptor());
-		AopProxy aop = new CglibAopProxy(as);
+		AopProxy aop = new ByteBuddyAopProxy(as);
 
 		PackageMethodTestBean proxy = (PackageMethodTestBean) aop.getProxy();
-		assertThat(AopUtils.isCglibProxy(proxy)).isTrue();
-		assertThat(bean.getClass().getClassLoader()).isEqualTo(proxy.getClass().getClassLoader());
-		assertThat(proxy.getString()).isEqualTo("foo");
+		Assertions.assertThat(AopUtils.isByteBuddyProxy(proxy)).isTrue();
+		Assertions.assertThat(bean.getClass().getClassLoader()).isEqualTo(proxy.getClass().getClassLoader());
+		Assertions.assertThat(proxy.getString()).isEqualTo("foo");
 	}
 
 	@Test
@@ -132,15 +139,15 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 		mockTargetSource.setTarget(raw);
 		AdvisedSupport pc = new AdvisedSupport();
 		pc.setTargetSource(mockTargetSource);
-		AopProxy aop = new CglibAopProxy(pc);
+		AopProxy aop = new ByteBuddyAopProxy(pc);
 
 		Object proxy = aop.getProxy();
-		assertThat(AopUtils.isCglibProxy(proxy)).isTrue();
-		assertThat(proxy instanceof ITestBean).isTrue();
-		assertThat(proxy instanceof TestBean).isTrue();
+		Assertions.assertThat(AopUtils.isByteBuddyProxy(proxy)).isTrue();
+		Assertions.assertThat(proxy instanceof ITestBean).isTrue();
+		Assertions.assertThat(proxy instanceof TestBean).isTrue();
 
 		TestBean tb = (TestBean) proxy;
-		assertThat(tb.getAge()).isEqualTo(32);
+		Assertions.assertThat(tb.getAge()).isEqualTo(32);
 	}
 
 	@Test
@@ -151,24 +158,24 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 		AdvisedSupport as = new AdvisedSupport();
 		as.setTarget(bean);
 		as.addAdvice(new NopInterceptor());
-		AopProxy aop = new CglibAopProxy(as);
+		AopProxy aop = new ByteBuddyAopProxy(as);
 
 		ByteBuddyTestBean proxy = (ByteBuddyTestBean) aop.getProxy();
-		assertThat(proxy.getName()).as("The name property has been overwritten by the constructor").isEqualTo("Rob Harrop");
+		Assertions.assertThat(proxy.getName()).as("The name property has been overwritten by the constructor").isEqualTo("Rob Harrop");
 	}
 
 	@Test
 	public void testToStringInvocation() {
-		PrivateCglibTestBean bean = new PrivateCglibTestBean();
+		PrivateByteBuddyTestBean bean = new PrivateByteBuddyTestBean();
 		bean.setName("Rob Harrop");
 
 		AdvisedSupport as = new AdvisedSupport();
 		as.setTarget(bean);
 		as.addAdvice(new NopInterceptor());
-		AopProxy aop = new CglibAopProxy(as);
+		AopProxy aop = new ByteBuddyAopProxy(as);
 
-		PrivateCglibTestBean proxy = (PrivateCglibTestBean) aop.getProxy();
-		assertThat(proxy.toString()).as("The name property has been overwritten by the constructor").isEqualTo("Rob Harrop");
+		PrivateByteBuddyTestBean proxy = (PrivateByteBuddyTestBean) aop.getProxy();
+		Assertions.assertThat(proxy.toString()).as("The name property has been overwritten by the constructor").isEqualTo("Rob Harrop");
 	}
 
 	@Test
@@ -180,10 +187,10 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 		pc.setFrozen(true);
 		pc.setTarget(target);
 
-		CglibAopProxy aop = new CglibAopProxy(pc);
+		ByteBuddyAopProxy aop = new ByteBuddyAopProxy(pc);
 		ByteBuddyTestBean proxy = (ByteBuddyTestBean) aop.getProxy();
-		assertThat(proxy).as("Proxy should not be null").isNotNull();
-		assertThat(proxy.getName()).as("Constructor overrode the value of name").isEqualTo("Rob Harrop");
+		Assertions.assertThat(proxy).as("Proxy should not be null").isNotNull();
+		Assertions.assertThat(proxy.getName()).as("Constructor overrode the value of name").isEqualTo("Rob Harrop");
 	}
 
 	@Test
@@ -195,9 +202,9 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 
 		ITestBean proxy1 = getAdvisedProxy(target);
 		ITestBean proxy2 = getAdvisedProxy(target2);
-		assertThat(proxy2.getClass()).isSameAs(proxy1.getClass());
-		assertThat(proxy1.getAge()).isEqualTo(target.getAge());
-		assertThat(proxy2.getAge()).isEqualTo(target2.getAge());
+		Assertions.assertThat(proxy2.getClass()).isSameAs(proxy1.getClass());
+		Assertions.assertThat(proxy1.getAge()).isEqualTo(target.getAge());
+		Assertions.assertThat(proxy2.getAge()).isEqualTo(target2.getAge());
 	}
 
 	private ITestBean getAdvisedProxy(TestBean target) {
@@ -241,7 +248,7 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 
 		ITestBean proxy1 = getIntroductionAdvisorProxy(target1);
 		ITestBean proxy2 = getIntroductionAdvisorProxy(target2);
-		assertThat(proxy2.getClass()).as("Incorrect duplicate creation of proxy classes").isSameAs(proxy1.getClass());
+		Assertions.assertThat(proxy2.getClass()).as("Incorrect duplicate creation of proxy classes").isSameAs(proxy1.getClass());
 	}
 
 	private ITestBean getIntroductionAdvisorProxy(TestBean target) {
@@ -264,11 +271,11 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 		mockTargetSource.setTarget(target);
 		AdvisedSupport pc = new AdvisedSupport();
 		pc.setTargetSource(mockTargetSource);
-		CglibAopProxy aop = new CglibAopProxy(pc);
+		ByteBuddyAopProxy aop = new ByteBuddyAopProxy(pc);
 		aop.setConstructorArguments(new Object[] {"Rob Harrop", 22}, new Class<?>[] {String.class, int.class});
 
 		NoArgCtorTestBean proxy = (NoArgCtorTestBean) aop.getProxy();
-		assertThat(proxy).isNotNull();
+		Assertions.assertThat(proxy).isNotNull();
 	}
 
 	@Test
@@ -279,17 +286,17 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 		AdvisedSupport as = new AdvisedSupport();
 		as.setTargetSource(mockTargetSource);
 		as.addAdvice(new NopInterceptor());
-		CglibAopProxy cglib = new CglibAopProxy(as);
+		ByteBuddyAopProxy byteBuddy = new ByteBuddyAopProxy(as);
 
-		ITestBean proxy1 = (ITestBean) cglib.getProxy();
+		ITestBean proxy1 = (ITestBean) byteBuddy.getProxy();
 
 		mockTargetSource.setTarget(proxy1);
 		as = new AdvisedSupport(new Class<?>[]{});
 		as.setTargetSource(mockTargetSource);
 		as.addAdvice(new NopInterceptor());
-		cglib = new CglibAopProxy(as);
+		byteBuddy = new ByteBuddyAopProxy(as);
 
-		assertThat(cglib.getProxy()).isInstanceOf(ITestBean.class);
+		Assertions.assertThat(byteBuddy.getProxy()).isInstanceOf(ITestBean.class);
 	}
 
 	@Test
@@ -301,18 +308,18 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 		as.setTargetSource(mockTargetSource);
 		as.addAdvice(new NopInterceptor());
 		as.addInterface(Serializable.class);
-		CglibAopProxy cglib = new CglibAopProxy(as);
+		ByteBuddyAopProxy byteBuddy = new ByteBuddyAopProxy(as);
 
-		ITestBean proxy1 = (ITestBean) cglib.getProxy();
+		ITestBean proxy1 = (ITestBean) byteBuddy.getProxy();
 
 		mockTargetSource.setTarget(proxy1);
 		as = new AdvisedSupport(new Class<?>[]{});
 		as.setTargetSource(mockTargetSource);
 		as.addAdvice(new NopInterceptor());
-		cglib = new CglibAopProxy(as);
+		byteBuddy = new ByteBuddyAopProxy(as);
 
-		ITestBean proxy2 = (ITestBean) cglib.getProxy();
-		assertThat(proxy2 instanceof Serializable).isTrue();
+		ITestBean proxy2 = (ITestBean) byteBuddy.getProxy();
+		Assertions.assertThat(proxy2 instanceof Serializable).isTrue();
 	}
 
 	@Test
@@ -323,7 +330,7 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 		AdvisedSupport as = new AdvisedSupport();
 		as.setTargetSource(mockTargetSource);
 		as.addAdvice(new NopInterceptor());
-		AopProxy aop = new CglibAopProxy(as);
+		AopProxy aop = new ByteBuddyAopProxy(as);
 
 		ExceptionThrower proxy = (ExceptionThrower) aop.getProxy();
 
@@ -331,11 +338,11 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 			proxy.doTest();
 		}
 		catch (Exception ex) {
-			assertThat(ex instanceof ApplicationContextException).as("Invalid exception class").isTrue();
+			Assertions.assertThat(ex instanceof ApplicationContextException).as("Invalid exception class").isTrue();
 		}
 
-		assertThat(proxy.isCatchInvoked()).as("Catch was not invoked").isTrue();
-		assertThat(proxy.isFinallyInvoked()).as("Finally was not invoked").isTrue();
+		Assertions.assertThat(proxy.isCatchInvoked()).as("Catch was not invoked").isTrue();
+		Assertions.assertThat(proxy.isFinallyInvoked()).as("Finally was not invoked").isTrue();
 	}
 
 	@Test
@@ -357,14 +364,14 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 		pf.setProxyTargetClass(true);
 
 		TestBean proxy = (TestBean) pf.getProxy();
-		assertThat(AopUtils.isCglibProxy(proxy)).isTrue();
+		Assertions.assertThat(AopUtils.isByteBuddyProxy(proxy)).isTrue();
 
 		proxy.getAge();
-		assertThat(cba.getCalls()).isEqualTo(0);
+		Assertions.assertThat(cba.getCalls()).isEqualTo(0);
 
 		((Advised) proxy).addAdvice(cba);
 		proxy.getAge();
-		assertThat(cba.getCalls()).isEqualTo(1);
+		Assertions.assertThat(cba.getCalls()).isEqualTo(1);
 	}
 
 	@Test
@@ -375,15 +382,15 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 		proxyFactory.setProxyTargetClass(true);
 
 		MyBean proxy = (MyBean) proxyFactory.getProxy();
-		assertThat(proxy.add(1, 3)).isEqualTo(4);
-		assertThat(advice.getCalls("add")).isEqualTo(1);
+		Assertions.assertThat(proxy.add(1, 3)).isEqualTo(4);
+		Assertions.assertThat(advice.getCalls("add")).isEqualTo(1);
 	}
 
 	@Test
 	public void testProxyTargetClassInCaseOfNoInterfaces() {
 		ProxyFactory proxyFactory = new ProxyFactory(new MyBean());
 		MyBean proxy = (MyBean) proxyFactory.getProxy();
-		assertThat(proxy.add(1, 3)).isEqualTo(4);
+		Assertions.assertThat(proxy.add(1, 3)).isEqualTo(4);
 	}
 
 	@Test  // SPR-13328
@@ -391,7 +398,7 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 	public void testVarargsWithEnumArray() {
 		ProxyFactory proxyFactory = new ProxyFactory(new MyBean());
 		MyBean proxy = (MyBean) proxyFactory.getProxy();
-		assertThat(proxy.doWithVarargs(MyEnum.A, MyOtherEnum.C)).isTrue();
+		Assertions.assertThat(proxy.doWithVarargs(MyEnum.A, MyOtherEnum.C)).isTrue();
 	}
 
 
@@ -501,11 +508,11 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 	}
 
 
-	private static class PrivateCglibTestBean {
+	private static class PrivateByteBuddyTestBean {
 
 		private String name;
 
-		public PrivateCglibTestBean() {
+		public PrivateByteBuddyTestBean() {
 			setName("Some Default");
 		}
 
@@ -525,11 +532,11 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 }
 
 
-class CglibTestBean {
+class ByteBuddyTestBean {
 
 	private String name;
 
-	public CglibTestBean() {
+	public ByteBuddyTestBean() {
 		setName("Some Default");
 	}
 
@@ -548,7 +555,7 @@ class CglibTestBean {
 }
 
 
-class UnsupportedInterceptor implements MethodInterceptor {
+class ByteBuddyUnsupportedInterceptor implements MethodInterceptor {
 
 	@Override
 	public Object invoke(MethodInvocation mi) throws Throwable {

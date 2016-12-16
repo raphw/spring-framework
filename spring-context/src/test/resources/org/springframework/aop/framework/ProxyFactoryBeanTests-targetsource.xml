@@ -41,7 +41,7 @@
 	</bean>
 
 	<bean id ="unsupportedInterceptor"
-		class="org.springframework.aop.framework.UnsupportedInterceptor"
+		class="org.springframework.aop.framework.ByteBuddyUnsupportedInterceptor"
 	/>
 
 	<!--

@@ -57,6 +57,9 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 
 	@Override
 	public AopProxy createAopProxy(AdvisedSupport config) throws AopConfigException {
+		if (Boolean.getBoolean("org.springframework.aop.framework.bytebuddy")) { // TODO: Current work-around!
+			return new ByteBuddyAopProxy(config);
+		}
 		if (!IN_NATIVE_IMAGE &&
 				(config.isOptimize() || config.isProxyTargetClass() || hasNoUserSuppliedProxyInterfaces(config))) {
 			Class<?> targetClass = config.getTargetClass();
